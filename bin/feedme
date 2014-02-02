@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '../lib'))
+
+require 'feedme_youtubes'
+require 'yaml'
+
+fmy = FeedmeYoutubes.new(YAML.load_file('config.yaml'))
+
+fmy.update
+
+ap fmy
