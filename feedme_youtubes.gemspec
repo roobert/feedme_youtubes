@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = FeedmeYoutubes::VERSION
   spec.authors       = ["Rob Wilson"]
   spec.email         = ["roobert@gmail.com"]
-  spec.summary       = %q{monitor youtubes upload feeds for new videos and provide various interfaces to the results}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = "fetch youtube feeds"
+  spec.description   = "fetch youtube feeds!"
   spec.homepage      = "http://github.com/roobert/feedme_youtubes"
   spec.license       = "MIT"
 

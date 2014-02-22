@@ -9,4 +9,4 @@ fmy = FeedmeYoutubes.new(YAML.load_file('config.yaml'))
 
 fmy.update
 
-ap fmy
+puts fmy

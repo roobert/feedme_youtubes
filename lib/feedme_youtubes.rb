@@ -12,13 +12,33 @@ require 'active_support/hash_with_indifferent_access'
 # web interface on sinatra app with link to web page...
 
 class FeedmeYoutubes
+  attr_accessor :feeds
+
   def initialize(hash)
     @config = ActiveSupport::HashWithIndifferentAccess.new(hash)
-    @feeds  = Feeds.new(@config[:authors])
+    @feeds  = []
+
+    raise ArgumentError, "authors is not an Array" unless @config[:authors].class == Array
+
+    @authors = @config[:authors]
   end
 
   def update
-    @feeds.update
+    populate_feeds
+    update_feeds
+  end
+
+  def populate_feeds
+    @feed = []
+    @authors.each { |author| @feeds << Feed.new(author) }
+  end
+
+  def update_feeds
+    @feeds.each { |feed| feed.update }
+  end
+
+  def to_s
+    @feeds.map { |feed| feed.to_s }.join("\n")
   end
 
   ###
@@ -26,10 +46,30 @@ class FeedmeYoutubes
   #
 
   class Entry
+    attr_reader :title, :published, :link
+
     def initialize(title: title, published: published, link: link)
-      @title     = title
-      @published = published
-      @link      = link
+      @title       = title
+      @published   = published
+      @link        = link
+      @remote_file = YoutubeDl::YoutubeVideo.new(link, { :location => "downloads/" })
+    end
+
+    def download
+      @remote_file.video_filename
+      @remote_file.download
+    end
+
+    def downloaded_state
+      if File.exist? @remote_file.video_filename
+        "+"
+      else
+        "-"
+      end
+    end
+
+    def to_s
+      "#{@published} [#{downloaded_state}] #{@title}"
     end
   end
 
@@ -46,6 +86,10 @@ class FeedmeYoutubes
       @author   = author
       @feed_url = "https://gdata.youtube.com/feeds/api/users/#{author}/uploads"
       @entries = []
+    end
+
+    def to_s
+      "#{@author}\n" + entries.each { |entry| entry.to_s }.join("\n")
     end
 
     def update
@@ -67,39 +111,15 @@ class FeedmeYoutubes
       @feed.xpath("//entry").each do |entry|
         title     = entry.xpath("title").text
         published = Date.parse(entry.xpath("published").text)
-        link      = entry.xpath("link[@rel='alternate']").text
+
+        links = entry.xpath("link[@rel='alternate']['href']").map { |anchor| anchor['href'] }
+
+        raise StandardError, "wrong number of links found on page!" if links.length != 1
+
+        link = links[0]
 
         @entries << Entry.new(title: title, published: published, link: link) 
       end
-    end
-  end
-
-  ###
-  # get rid of this?
-  #
-
-  class Feeds
-    attr_accessor :feeds
-
-    def initialize(authors)
-      raise ArgumentError, "authors is not an Array" unless authors.class == Array
-
-      @authors = authors
-      @feeds   = []
-    end
-
-    def update
-      populate_feeds
-      update_feeds
-    end
-
-    def populate_feeds
-      @feed = []
-      @authors.each { |author| @feeds << Feed.new(author) }
-    end
-
-    def update_feeds
-      @feeds.each { |feed| feed.update }
     end
   end
 end

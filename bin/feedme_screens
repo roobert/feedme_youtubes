@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '../lib'))
+
+require 'feedme_youtubes'
+require 'yaml'
+
+fmy = FeedmeYoutubes.new(YAML.load_file('config.yaml'))
+
+fmy.update
+
+#fmy.feeds.each do |feed|
+#  puts feed
+#end
+
+fmy.feeds.each do |feed|
+
+  last_published_date = nil
+
+  feed.entries.reverse.each do |entry|
+
+    if entry.published != last_published_date
+      puts "--- #{entry.published} - #{feed.author}"
+      last_published_date = entry.published
+    end
+
+    puts entry.title.gsub('Opie & Anthony:', 'o&a:')
+  end
+
+  exit
+end
+
